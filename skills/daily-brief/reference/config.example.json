@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "user": { "name": "Jane Doe", "timezone": "Etc/UTC" },
+  "archive_dir": "~/daily-briefs",
+  "port": 8765,
+  "calendar": {
+    "sections": [
+      { "name": "Work (mine)", "ids": ["primary"] },
+      { "name": "Team", "ids": ["team-calendar-id"] }
+    ],
+    "merge": { "name": "Holidays & paydays", "ids": ["US holidays", "Company holidays"] },
+    "collapse_ooo_on": ["Team"],
+    "extra_calendars": "own-section"
+  },
+  "slack": {
+    "user_id": "U000",
+    "team_id": "T000",
+    "workspace_url": "https://example.slack.com",
+    "github_handle": "jane-doe",
+    "channels": [
+      { "id": "C000", "name": "deploys", "match": "deploys" },
+      { "id": "C001", "name": "team-ops", "match": "mentions" }
+    ]
+  },
+  "tracker": {
+    "type": "asana",
+    "name": "Team Board",
+    "workspace_id": "0000000000000000",
+    "project": "0000000000000001",
+    "sections": [
+      { "status": "Backlog", "gid": "0000000000000002", "role": "backlog" },
+      { "status": "To do", "gid": "0000000000000003", "role": "active" },
+      { "status": "In progress", "gid": "0000000000000004", "role": "active" },
+      { "status": "Done", "gid": "0000000000000005", "role": "done" }
+    ],
+    "fields": {
+      "key": "0000000000000006",
+      "priority": {
+        "gid": "0000000000000007",
+        "options": { "P1": "0000000000000008", "P2": "0000000000000009", "P3": "0000000000000010" }
+      },
+      "estimate": "0000000000000011"
+    },
+    "pat_keychain_item": "asana-pat"
+  },
+  "todos": {
+    "type": "slack_list",
+    "name": "My Todos",
+    "list_id": "F000",
+    "url": "https://example.slack.com/lists/T000/F000"
+  }
+}
