@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Set up the daily brief — discovers your calendars, Slack channels, Asana board and Slack todo list through your connectors, checks the Keychain token and ports without reading any secret, writes the daily-brief config file, and creates the weekday scheduled task. Use when asked to set up, configure or re-configure the daily brief, or when /daily-brief:daily-brief says there is no config.
+description: Set up the daily brief — discovers your calendars, Slack channels, Asana board and Slack todo list through your connectors, checks the keyring token and ports without reading any secret, writes the daily-brief config file, and creates the weekday scheduled task. Use when asked to set up, configure or re-configure the daily brief, or when /daily-brief:daily-brief says there is no config.
 ---
 
 # Daily brief setup
@@ -31,7 +31,7 @@ Run `python3 -I <skill dir>/../daily-brief/config.py path` (it is `$DAILY_BRIEF_
 Run `sh <skill dir>/check.sh all` (on a re-run add the existing `tracker.pat_keychain_item`, in single quotes, and
 `port` as its two arguments; with no tracker section, pass the default item `'daily-brief-asana'`
 so the port is still the second argument). It prints one `ok:` or `missing:` line per check: python 3.9+, the
-timezone, the Keychain item, the server port. A `missing: python` stops setup: say Python 3.9 or newer
+timezone, the keyring item, the server port. A `missing: python` stops setup: say Python 3.9 or newer
 is needed. The rest are handled in the steps below.
 
 Then load the connector tools in one ToolSearch call: Google Calendar, Slack and Asana. Each source
@@ -87,7 +87,7 @@ project's name), the sections and the custom fields.
 - Fields, each optional: `key` (a text field holding the card key, for example the ticket number),
   `priority` (an enum field: show its options and ask which three are P1, P2 and P3; all three are
   required), `estimate` (a number field, in minutes).
-- `pat_keychain_item`: the Keychain item holding the user's Asana personal access token, default
+- `pat_keychain_item`: the keyring item (libsecret on Linux, Keychain on macOS) holding the user's Asana personal access token, default
   `daily-brief-asana`. Step 5 checks it.
 
 ## 5. Token
@@ -98,10 +98,11 @@ Run `sh <skill dir>/check.sh pat '<item>'`.
 - `missing:` show this command, exactly, for the user to run themselves with the `!` prefix (it
   prompts for the secret itself, in the terminal, so the token never appears in chat):
 
-  `security add-generic-password -s daily-brief-asana -a "$USER" -w`
+  `secret-tool store --label=daily-brief-asana service daily-brief-asana`
 
-  (with the user's item name in place of `daily-brief-asana`, in double quotes when it has a space).
-  If it does not prompt in this session, the same command works in Terminal. Then run
+  (with the user's item name in place of both `daily-brief-asana` values, in double quotes when it has
+  a space). On macOS the equivalent is `security add-generic-password -s daily-brief-asana -a "$USER" -w`.
+  If it does not prompt in this session, the same command works in a separate terminal. Then run
   `check.sh pat '<item>'` again. The user may continue without it: the board and everything else
   work, but the Untracked section and the time columns stay off until the item exists.
 
@@ -140,7 +141,7 @@ good one.
 
 ## 9. Schedule
 
-Ask whether to schedule the brief on weekday mornings and at what time (default 07:30, the Mac's
+Ask whether to schedule the brief on weekday mornings and at what time (default 07:30, the machine's
 local time). To decline is fine: skip to the end.
 
 With the scheduled-tasks connector's `create_scheduled_task` (load its schema with ToolSearch first

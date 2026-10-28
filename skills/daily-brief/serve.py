@@ -6,13 +6,13 @@ Usage: python3 -I serve.py [DIR] [PORT]    (defaults: ~/daily-briefs, 8765; bind
 Serves DIR read-only, like `python3 -m http.server`, plus:
   GET  /__brief  -> "daily-brief-server 2 <plugin version>"; lets the skill tell this server from a plain http.server
   GET  /__adapters -> {"asana": true|false, "todos": true|false, "today": "YYYY-MM-DD"|null}; whether the page's
-                    Apply can write to Asana (a tracker is configured and its Keychain token exists) and to the
+                    Apply can write to Asana (a tracker is configured and its keyring token exists) and to the
                     todos Slack List (todos is configured and `claude` is on the PATH), and today in user.timezone,
                     the only day it writes for
-  POST /open     -> body {"url": "..."}; runs macOS `open <url>`, so the link opens in the default
+  POST /open     -> body {"url": "..."}; runs `xdg-open <url>` (macOS `open`), so the link opens in the default
                     browser (or, for slack://, the Slack app) instead of the Claude browser pane.
   POST /apply/asana -> body {"day": "YYYY-MM-DD", "items": [{"gid", "status"?, "priority"?, "take"?, "complete"?,
-                    "log"?: {"minutes", "date"}}]}; writes the changes to Asana with the Keychain token, reads the
+                    "log"?: {"minutes", "date"}}]}; writes the changes to Asana with the keyring token, reads the
                     touched sections again and re-renders today's saved page. 200 with a result per item (each naming
                     the changes that "landed"), 207 when some failed, 400 for a body that names anything outside today's brief (nothing is written).
   POST /apply/todos -> body {"day", "done": [Record ID], "add": [{"task", "due", "notes"}]}; runs a headless `claude -p`
@@ -63,6 +63,7 @@ MAX_APPLY_BODY = 16 * 1024
 APPLY_LOCK = threading.Lock()
 TODOS_LOCK = threading.Lock()
 REFUSED = object()
+OPENER = "open" if sys.platform == "darwin" else "xdg-open"
 HOSTS = re.compile(r"(^|\.)(asana\.com|slack\.com|google\.com|zoom\.us|github\.com|circleci\.com)$")
 
 
@@ -122,7 +123,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._send(400, "bad request")
         if not allowed(url):
             return self._send(400, "url not allowed")
-        rc = subprocess.run(["open", url], capture_output=True, timeout=10).returncode
+        rc = subprocess.run([OPENER, url], capture_output=True, timeout=10).returncode
         self._send(200 if rc == 0 else 502, "ok" if rc == 0 else "open failed")
 
     def check_write(self):

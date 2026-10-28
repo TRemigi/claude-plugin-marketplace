@@ -5,7 +5,7 @@ Usage: python3 -I asana_rest.py log [--dry-run] <task_gid> <duration> [YYYY-MM-D
        python3 -I asana_rest.py window <start YYYY-MM-DD> <end YYYY-MM-DD> <task_gid>...
 log     duration is 45m | 1h | 1h30m | 90 (bare number = minutes); prints "logged <n>m on <day> (task <gid>)".
 window  prints "<gid> <minutes>" per task (entries whose entered_on is in start..end), or "<gid> error".
-The token is read from the macOS Keychain item named by tracker.pat_keychain_item in the daily-brief
+The token is read from the keyring item (macOS Keychain, or libsecret via secret-tool elsewhere) named by tracker.pat_keychain_item in the daily-brief
 config, held in memory only and never printed or put on a command line. DAILY_BRIEF_ASANA_BASE
 replaces the API base only when it is http://127.0.0.1:<port> (for a local stand-in server).
 """
@@ -63,8 +63,14 @@ def keychain_item():
         raise Unavailable(f"{e.args[0]}: not set in {config.config_path()}")
 
 
+def _lookup_command(item, secret):
+    if sys.platform == "darwin":
+        return ["security", "find-generic-password", "-s", item] + (["-w"] if secret else [])
+    return ["secret-tool", "lookup", "service", item]
+
+
 def _security(item, secret):
-    cmd = ["security", "find-generic-password", "-s", item] + (["-w"] if secret else [])
+    cmd = _lookup_command(item, secret)
     try:
         return subprocess.run(cmd, capture_output=True, text=True, timeout=15)
     except (OSError, subprocess.SubprocessError):
@@ -85,7 +91,7 @@ def read_token():
     found = _security(item, secret=True)
     token = found.stdout.strip() if found is not None and found.returncode == 0 else ""
     if not token:
-        raise Unavailable(f"error: Keychain item '{item}' not found")
+        raise Unavailable(f"error: keyring item '{item}' not found")
     return token
 
 

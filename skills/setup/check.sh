@@ -32,7 +32,12 @@ valid_item() {
 
 check_pat() {
   valid_item "$1" || usage
-  if security find-generic-password -s "$1" >/dev/null 2>&1; then
+  if [ "$(uname)" = Darwin ]; then
+    security find-generic-password -s "$1" >/dev/null 2>&1
+  else
+    secret-tool lookup service "$1" >/dev/null 2>&1
+  fi
+  if [ $? -eq 0 ]; then
     echo "ok: pat $1"
   else
     echo "missing: pat $1"

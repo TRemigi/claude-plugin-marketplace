@@ -39,7 +39,7 @@ missing: an unconfigured source is a choice, not a failure.
   `app` deep links.
 - Yesterday uses whichever of `tracker` and `slack` are on, and is omitted (no `summary` key, no
   Yesterday tile, no `recap`) when neither is.
-- Untracked needs `tracker` and its PAT. When `time-window.sh` fails with `Keychain item … not found`,
+- Untracked needs `tracker` and its PAT. When `time-window.sh` fails with `keyring item … not found`,
   there is no PAT: leave `untracked` out with its tile, leave every Yday cell blank (`null`), and add
   no failure note for it.
 
@@ -81,7 +81,7 @@ Fetch in parallel with the rest of the brief, only from the sources that are on 
 - **Slack channels that matter to me** (only when `slack` is on) — each entry of `{slack.channels}` (`id`, `name`, `match`), read with `slack_read_channel(channel_id, oldest=<start
   00:00 local, unix>, latest=<end 23:59:59 local, unix>, limit=100, response_format="concise")`,
   following `next_cursor` up to 3 pages (6 for a Monday window) — compute the bounds with
-  `TZ={user.timezone} date -j -f '%Y-%m-%d %H:%M:%S' '<start> 00:00:00' +%s` (and `<end> 23:59:59`). Search can't stand in
+  `TZ={user.timezone} date -d '<start> 00:00:00' +%s` (and `<end> 23:59:59`; on macOS use `date -j -f '%Y-%m-%d %H:%M:%S' '<start> 00:00:00' +%s`). Search can't stand in
   here: deploy posts are bot attachments that search returns with empty text. `match` says what counts as mine:
   - `deploys`: deploy posts whose author (✏️) or merger (merge icon) is me — GitHub `{slack.github_handle}` (link `github.com/{slack.github_handle}`) or "{user.name}" — including PRs a bot account opened that I merged. Ignore the daily "Deploy recap" post.
   - `mentions`: my posts, posts that @-mention me (`<@{slack.user_id}>`) or name me, and threads I started or replied in.
@@ -289,7 +289,7 @@ succeed:
 - **Log time** — `3 +45m`, `3 +1h30m`, `3 +90`, optional `yesterday` / `YYYY-MM-DD` (default today,
   local). Untracked rows arrive from the page as `task <gid> log <dur> on <YYYY-MM-DD>` — use the
   gid and date as given. Run `<skill dir>/log-time.sh <gid> <duration> [date]` once per row; it
-  reads the token from the Keychain item `{tracker.pat_keychain_item}` and never prints it. Never read, echo or pass
+  reads the token from the keyring item `{tracker.pat_keychain_item}` and never prints it. Never read, echo or pass
   the token yourself. Report its one-line output; on error, quote it. Refresh afterwards per "Refresh after an update".
 - **Set estimate** — `3 est 2h`: `update_tasks` with `custom_fields: {"{tracker.fields.estimate}": <minutes>}` (no `estimate` field configured → say estimates are unavailable).
 - Both are me asking — no extra confirmation. Row numbers resolve as in 2a (B-rows too).
@@ -337,13 +337,13 @@ and show the saved copy in the Claude app's browser pane (scheduled runs too):
    the brief server with Bash in the background: `python3 -I <skill dir>/serve.py "{archive_dir}" {port}`.
    `serve.py` serves pages with `Cache-Control: no-store`, so a reload always shows the latest
    render. Its `POST /open` endpoint lets page links open in my default browser (Chrome), and
-   Slack links in the Slack app, through macOS `open` instead of inside the Claude browser pane.
+   Slack links in the Slack app, through `xdg-open` (macOS `open`) instead of inside the Claude browser pane.
    `/open` accepts only https links to the brief's known hosts plus `slack://`, only from the page
    itself. If the endpoint isn't reachable, the page falls back to opening links itself.
 2. Open `http://127.0.0.1:{port}/<YYYY-MM-DD>.html` with `mcp__Claude_Browser__preview_start` (`url`);
    if that reports the navigation failed (the server was still starting), retry once with
    `mcp__Claude_Browser__navigate`.
-3. Only if the browser pane tools aren't available, fall back to `open "{archive_dir}/<YYYY-MM-DD>.html"`
+3. Only if the browser pane tools aren't available, fall back to `xdg-open "{archive_dir}/<YYYY-MM-DD>.html"` (macOS `open`)
    (default browser). Don't use `SendUserFile` for it: the app's file preview doesn't render the page.
 The server lives as long as the session; an already-loaded page keeps working after it stops.
 `--archive "{archive_dir}"` saves that day's page and data as `{archive_dir}/<YYYY-MM-DD>.html`
@@ -358,16 +358,16 @@ paragraph and stat tiles; then Schedule, Yesterday, Untracked yesterday, the boa
 sections (all collapsed on load; opening a section expands every group in it) with matching bordered tables, group rows also collapsed on load, each table with its own
 Expand all / Collapse all control, subtle per-section colour). If the design needs to change,
 change `brief.html`.
-Theme: a local page can't be relied on to see the Mac's appearance, so `render-panel.py` reads it
-(`defaults read -g AppleInterfaceStyle`) and sets `theme` in the data unless the data already has
+Theme: a local page can't be relied on to see the desktop's appearance, so `render-panel.py` reads it
+(`gsettings get org.gnome.desktop.interface color-scheme`; macOS `defaults read -g AppleInterfaceStyle`) and sets `theme` in the data unless the data already has
 one; a sun/moon button in the page header overrides it and remembers the choice in that browser.
 Links carry `target="_blank"` (and use the host's `openLink` inline), so they open in a new tab;
 Slack links try the desktop app first.
 
 In the browser page, the Apply buttons can't post to chat. On the board and Untracked sections they write
 directly to Asana when the server reports the adapter (`GET /__adapters` returns `{"asana": true}`: a tracker
-is configured and its Keychain token exists): the page posts structured changes to `POST /apply/asana`, the
-server writes them with the Keychain token, reads the touched sections again, re-renders today's saved page
+is configured and its keyring token exists): the page posts structured changes to `POST /apply/asana`, the
+server writes them with the keyring token, reads the touched sections again, re-renders today's saved page
 and the page reloads, unless other edits on the page are still pending. Only today's page (today in
 `user.timezone`) can be applied, and only to cards in that brief. The todos Apply writes directly when the
 server reports the todos adapter (`"todos": true`: `todos` is configured and `claude` is on the PATH): the page

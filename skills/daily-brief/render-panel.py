@@ -40,10 +40,14 @@ data_path, out_path = args[0], args[1]
 
 data = json.loads(pathlib.Path(data_path).read_text())
 if "theme" not in data:
-    # The side panel doesn't report the Mac's appearance to the page, so read it at build time.
+    # The side panel doesn't report the desktop's appearance to the page, so read it at build time.
+    if sys.platform == "darwin":
+        cmd, dark = ["defaults", "read", "-g", "AppleInterfaceStyle"], "Dark"
+    else:
+        cmd, dark = ["gsettings", "get", "org.gnome.desktop.interface", "color-scheme"], "'prefer-dark'"
     try:
-        out = subprocess.run(["defaults", "read", "-g", "AppleInterfaceStyle"], capture_output=True, text=True, timeout=5)
-        data["theme"] = "dark" if out.stdout.strip() == "Dark" else "light"
+        out = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        data["theme"] = "dark" if out.stdout.strip() == dark else "light"
     except (OSError, subprocess.SubprocessError):
         pass
 

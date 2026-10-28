@@ -62,7 +62,7 @@ def _apply(body, root):
     today = _today(cfg)
     data, plans = _plan(body, root, tracker, today)
     if not asana_rest.has_token():
-        raise Refused(503, "no Asana token in the Keychain")
+        raise Refused(503, "no Asana token in the keyring")
     try:
         client = asana_rest.Client(asana_rest.read_token())
     except asana_rest.Unavailable as e:
