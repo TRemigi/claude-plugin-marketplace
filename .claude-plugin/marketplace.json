@@ -1,7 +1,7 @@
 {
-  "name": "daily-brief-dev",
-  "owner": { "name": "Taylor Remigi" },
-  "metadata": { "description": "Local marketplace for the daily-brief plugin." },
+  "name": "trex-local-marketplace",
+  "owner": { "name": "trex" },
+  "metadata": { "description": "Local marketplace." },
   "plugins": [
     {
       "name": "daily-brief",

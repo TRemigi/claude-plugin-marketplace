@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "description": "Daily brief: standup notes, calendar, tracker board and todos in one local page. Driven by one config file; read-only by default.",
   "author": {
-    "name": "Taylor Remigi"
+    "name": "trex"
   }
 }
