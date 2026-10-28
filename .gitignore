@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.tmp
+*.bak
+
+# a real config or archive belongs in your own dotfiles or data folder, not in the plugin repo
+config.json
+.env

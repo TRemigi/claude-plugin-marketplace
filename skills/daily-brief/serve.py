@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Local server for the daily brief pages, with an endpoint that opens links in the default browser.
 
-Usage: python3 -I serve.py [DIR] [PORT]    (defaults: ~/daily-briefs, 8765; binds 127.0.0.1 only)
+Usage: python3 -I serve.py [DIR] [PORT]    (defaults: the config's archive_dir, 8765; binds 127.0.0.1 only)
 
 Serves DIR read-only, like `python3 -m http.server`, plus:
   GET  /__brief  -> "daily-brief-server 2 <plugin version>"; lets the skill tell this server from a plain http.server
@@ -51,10 +51,11 @@ def load_module(name, file):
     return module
 
 
+config = load_module("daily_brief_config", "config.py")
 apply_asana = load_module("daily_brief_apply_asana", "apply_asana.py")
 todos_claude = load_module("daily_brief_todos_claude", "todos_claude.py")
 
-ROOT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "~/daily-briefs").expanduser()
+ROOT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else config.defaults()["archive_dir"]).expanduser()
 PORT = int(sys.argv[2]) if len(sys.argv) > 2 else 8765
 PLUGIN_JSON = pathlib.Path(__file__).resolve().parent.parent.parent / ".claude-plugin" / "plugin.json"
 ORIGINS = {f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}"}

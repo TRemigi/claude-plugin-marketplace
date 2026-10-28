@@ -1,7 +1,7 @@
 {
   "version": 1,
   "user": { "name": "Jane Doe", "timezone": "Etc/UTC" },
-  "archive_dir": "~/daily-briefs",
+  "archive_dir": "~/.local/share/daily-brief/briefs",
   "port": 8765,
   "calendar": {
     "sections": [

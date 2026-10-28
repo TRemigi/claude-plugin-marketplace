@@ -13,12 +13,23 @@ import datetime
 import html
 import importlib.util
 import json
+import os
 import pathlib
 import re
 import subprocess
 import sys
 
 here = pathlib.Path(__file__).resolve().parent
+
+
+def write_private(path, text):
+    """Archived briefs hold calendar and Slack content, so they are readable by this user only."""
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        os.fchmod(f.fileno(), 0o600)
+        f.write(text)
+
+
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location("daily_brief_config", here / "config.py")
 config = importlib.util.module_from_spec(spec)
@@ -148,18 +159,18 @@ if archive:
     day = str(data.get("today", ""))
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day):
         sys.exit("error: data.today must be YYYY-MM-DD to archive")
-    archive.mkdir(parents=True, exist_ok=True)
-    (archive / f"{day}.json").write_text(json.dumps(data, ensure_ascii=False, indent=1))
+    archive.mkdir(parents=True, exist_ok=True, mode=0o700)
+    write_private(archive / f"{day}.json", json.dumps(data, ensure_ascii=False, indent=1))
     data["nav"], prev_day = nav_for(day, archive)
 
 pathlib.Path(out_path).write_text(build(data))
 print(out_path)
 
 if archive:
-    (archive / f"{day}.html").write_text(build(data))
+    write_private(archive / f"{day}.html", build(data))
     print(archive / f"{day}.html")
     # Rebuild the previous saved day so its "next" arrow points here.
     if prev_day:
         pd = json.loads((archive / f"{prev_day}.json").read_text())
         pd["nav"], _ = nav_for(prev_day, archive)
-        (archive / f"{prev_day}.html").write_text(build(pd))
+        write_private(archive / f"{prev_day}.html", build(pd))

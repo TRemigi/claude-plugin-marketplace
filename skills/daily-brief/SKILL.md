@@ -19,7 +19,7 @@ non-zero exit: print its lines and stop — never guess a missing value. Then re
 `python3 -I <skill dir>/config.py show` (one JSON object, `archive_dir` and `port` defaults filled; an
 unset optional value is absent). `<skill dir>` is this skill's "Base directory for this skill" line.
 `config.py path` prints which file is in use (`$DAILY_BRIEF_CONFIG`, else
-`~/.config/daily-brief/config.json`).
+`$XDG_CONFIG_HOME/daily-brief/config.json`, i.e. `~/.config/daily-brief/config.json`).
 
 Placeholders written `{tracker.project}` mean the value of that config path.
 

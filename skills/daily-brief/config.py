@@ -2,12 +2,14 @@
 """Config for the daily brief: one JSON file holds every id and name the skill needs.
 
 Usage: python3 -I config.py validate | show | get <dotted.path> | path
-Path: $DAILY_BRIEF_CONFIG, else ~/.config/daily-brief/config.json.
+Path: $DAILY_BRIEF_CONFIG, else $XDG_CONFIG_HOME/daily-brief/config.json (~/.config when unset).
+A symlink there (a dotfile manager's) is followed; a file anyone can write to is refused.
 validate  exits 0, or prints one "<path>: <problem>" per line and exits 1.
 show      prints the whole config as one JSON object, archive_dir and port defaults filled;
           an unset optional value is simply absent.
 get       prints a scalar bare, or a list/object as JSON; list items are addressed by index
-          (tracker.sections.0.gid). archive_dir (default ~/daily-briefs, ~ expanded) and port
+          (tracker.sections.0.gid). archive_dir (default $XDG_DATA_HOME/daily-brief/briefs, ~ expanded; an existing
+          ~/daily-briefs keeps being used until the new folder exists) and port
           (default 8765) fall back to their defaults when unset.
 path      prints the resolved config path.
 """
@@ -16,8 +18,7 @@ import os
 import pathlib
 import sys
 
-DEFAULT_PATH = "~/.config/daily-brief/config.json"
-DEFAULTS = {"archive_dir": "~/daily-briefs", "port": 8765}
+LEGACY_ARCHIVE = pathlib.Path("~/daily-briefs").expanduser()
 TRACKER_ROLES = ("backlog", "active", "done")
 CHANNEL_MATCHES = ("deploys", "mentions")
 
@@ -28,14 +29,32 @@ class ConfigError(Exception):
         self.errors = errors
 
 
+def _xdg_dir(var, fallback):
+    """The XDG base directory named by var; the spec says to ignore a relative value."""
+    value = os.environ.get(var, "")
+    return pathlib.Path(value) if os.path.isabs(value) else pathlib.Path(fallback).expanduser()
+
+
 def config_path():
-    return pathlib.Path(os.environ.get("DAILY_BRIEF_CONFIG") or DEFAULT_PATH).expanduser()
+    override = os.environ.get("DAILY_BRIEF_CONFIG")
+    if override:
+        return pathlib.Path(override).expanduser()
+    return _xdg_dir("XDG_CONFIG_HOME", "~/.config") / "daily-brief" / "config.json"
+
+
+def defaults():
+    archive = _xdg_dir("XDG_DATA_HOME", "~/.local/share") / "daily-brief" / "briefs"
+    if LEGACY_ARCHIVE.is_dir() and not archive.exists():
+        archive = LEGACY_ARCHIVE
+    return {"archive_dir": str(archive), "port": 8765}
 
 
 def read():
     path = config_path()
     try:
         text = path.read_text()
+        if path.stat().st_mode & 0o002:
+            raise ConfigError([f"config: {path} is writable by everyone; run chmod o-w on it"])
     except FileNotFoundError:
         raise ConfigError([f"config: not found at {path}"])
     except OSError as e:
@@ -208,8 +227,8 @@ def lookup(cfg, dotted):
         elif isinstance(node, list) and part.isdigit() and int(part) < len(node):
             node = node[int(part)]
         else:
-            if dotted in DEFAULTS:
-                return DEFAULTS[dotted]
+            if dotted in defaults():
+                return defaults()[dotted]
             raise KeyError(dotted)
     return node
 
@@ -253,7 +272,7 @@ def main(argv):
         except ConfigError as e:
             print(e, file=sys.stderr)
             return 1
-        shown = dict(cfg, **{name: setting_from(cfg, name) for name in DEFAULTS})
+        shown = dict(cfg, **{name: setting_from(cfg, name) for name in defaults()})
         print(json.dumps(shown, ensure_ascii=False))
         return 0
     if cmd == "get" and len(argv) == 2:
