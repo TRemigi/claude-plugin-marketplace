@@ -70,7 +70,7 @@ Fetch in parallel with the rest of the brief, only from the sources that are on 
   `completed_at` inside the window (local time).
 - **Asana, created by me** (only when `tracker` is on): same call shape with `created_by_any="me"`, `created_on_after/before`
   bounding the day, `limit=100`, `opt_fields` adding `created_at,completed,permalink_url` — keep only
-  `created_at` inside the local window (the date filters are loose). Fold delivery slices (`S1:`…)
+  `created_at` inside the local window (the date filters are loose). Fold subtasks
   into their parent card. These feed the **Queued up** group below.
 - **Asana, progressed** (only when `tracker` is on): `search_tasks(assignee_any="me", completed=false, modified_on_after=<day-1>,
   modified_on_before=<day+1>, opt_fields=name,memberships.section.name)`. Count a task only if it
@@ -83,7 +83,7 @@ Fetch in parallel with the rest of the brief, only from the sources that are on 
   following `next_cursor` up to 3 pages (6 for a Monday window) — compute the bounds with
   `TZ={user.timezone} date -d '<start> 00:00:00' +%s` (and `<end> 23:59:59`; on macOS use `date -j -f '%Y-%m-%d %H:%M:%S' '<start> 00:00:00' +%s`). Search can't stand in
   here: deploy posts are bot attachments that search returns with empty text. `match` says what counts as mine:
-  - `deploys`: deploy posts whose author (✏️) or merger (merge icon) is me — GitHub `{slack.github_handle}` (link `github.com/{slack.github_handle}`) or "{user.name}" — including PRs a bot account opened that I merged. Ignore the daily "Deploy recap" post.
+  - `deploys`: deploy posts that name me as author or merger — GitHub `{slack.github_handle}` (link `github.com/{slack.github_handle}`) or "{user.name}" — including PRs a bot account opened that I merged. Ignore daily recap or summary posts.
   - `mentions`: my posts, posts that @-mention me (`<@{slack.user_id}>`) or name me, and threads I started or replied in.
 
   My identities: Slack `{slack.user_id}` / "{user.name}", GitHub `{slack.github_handle}`, Asana "{user.name}".
@@ -170,19 +170,19 @@ Time columns (both read-only, shown as `1h30m`, blank when 0/null):
 **Untracked yesterday.** Flag board cards assigned to me that had activity in the
 yesterday window but no time tracked in it. Candidates, from data the brief already fetched:
 cards I completed, progressed (`active` section, modified in the window) or created in the window
-(section 0's Asana searches), plus cards named by a deployed/merged PR of mine in the `deploys` channel — Catalyst
+(section 0's Asana searches), plus cards named by a deployed/merged PR of mine in the `deploys` channel — when
 branch names carry the task gid (`feat/<task gid>-short-title`) — and cards my own Slack messages in the window link to
 or name by key.
-Fold delivery slices (`S1:` …) into their parent card (`get_tasks`/`search_tasks` with
-`opt_fields=parent.gid,parent.name` when needed) and count time on the parent or any of its slices.
-Run `time-window.sh <start> <end> <gid>…` once over all candidates (parent + slice gids); a card is
+Fold subtasks into their parent card (`get_tasks`/`search_tasks` with
+`opt_fields=parent.gid,parent.name` when needed) and count time on the parent or any of its subtasks.
+Run `time-window.sh <start> <end> <gid>…` once over all candidates (parent + subtask gids); a card is
 untracked when the sum is 0. Each flagged card becomes an `untracked` row (top-level in the data) with its activity in
 a few words ("PR merged · repo#854", "Completed", "Created", "Moved to Review"), its
 current status, and `day` = the local date of that activity (the latest one if several).
 
 Weigh each flagged card against the evidence the Yesterday section is built from, then suggest time:
-- **Evidence, per card (parent + slices):** each PR of mine deployed or merged in the `deploys`
-  channel (3 points), each card or slice I completed (2), each card or slice I created (1), and my
+- **Evidence, per card (parent + subtasks):** each PR of mine deployed or merged in the `deploys`
+  channel (3 points), each card or subtask I completed (2), each card or subtask I created (1), and my
   own Slack messages that link to the card, name its key or discuss its subject (1 per thread or
   conversation). A card whose only signal is a status move or field edit in the window has no
   evidence: set `activity` to "Status change only", give it no `suggest`, and list it after every
@@ -194,7 +194,7 @@ Weigh each flagged card against the evidence the Yesterday section is built from
   window, run `time-window.sh <day> <day> <gid>…` once per day over my cards whose Total is > 0, since
   the Fri–Sun run returns one total per card. A budget of 0 or less gives no card a `suggest`.
 - **`suggest`:** each evidenced card's share of its `day`'s budget by points, counting only the
-  evidence from that day, rounded to 15 minutes and at least 15 (whole minutes, 15–720). Set `evidence` to the points behind it in a few words ("2 PRs deployed · 8 slices
+  evidence from that day, rounded to 15 minutes and at least 15 (whole minutes, 15–720). Set `evidence` to the points behind it in a few words ("2 PRs deployed · 8 subtasks
   closed · Slack thread"), and `untrackedBasis` (top-level) to one line naming the budget, e.g.
   "Suggested times split 9h45m (first to last activity, 8:05 AM–5:50 PM) by PRs, completions and Slack."
 
@@ -261,7 +261,7 @@ Priority (` priority P2` from the page, or chat like `3 P1` / `B4 unset`) sets
 `custom_fields: {"{tracker.fields.priority.gid}": <option gid, or null for unset>}` in the same task object.
 Assigning sets `assignee: "me"` in the same task object — only for rows that are unassigned; if a
 row is assigned to someone else, skip it and say so rather than reassigning.
-Report one line per task (`#3 Fix X: Review → Ready to Deploy · assigned to you`) and any failures quoted from the
+Report one line per task (`#3 Fix X: In progress → Review · assigned to you`) and any failures quoted from the
 result, then refresh the page (see "Refresh after an update" below). Don't print the table in chat.
 
 ### Refresh after an update
@@ -428,7 +428,8 @@ note draws inside the section, so a missing key would hide the error and read as
                            note: "tentative"|"declined"|undefined, url: "<htmlLink>",
                            join: "https://…"|undefined }] }],
               footer: "0.25 h of meetings · longest free stretch 9:45 AM–5:00 PM" },
-  ops: { me: "{user.name}", ydayTitle: "Tracked yesterday"|"Tracked Fri–Sun", notes: ["…"],
+  ops: { me: "{user.name}",       // render-panel.py adds `sections` (status + role, board order) from the config
+         ydayTitle: "Tracked yesterday"|"Tracked Fri–Sun", notes: ["…"],
          rows: [{ n: "1"|"B1", gid, name, url, assignee: "<name>"|null, due: "YYYY-MM-DD"|"",
                   status: "To do", total: <minutes>|null, yday: <minutes>|"?"|null,
                   key: "PROJ-262"|null, priority: "P1"|"P2"|"P3"|null, created: "<created_at ISO>" }],

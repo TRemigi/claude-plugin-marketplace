@@ -62,8 +62,10 @@ if "theme" not in data:
     except (OSError, subprocess.SubprocessError):
         pass
 
+BOARD = []  # the board's columns in config order, so the page needs no status names of its own
 if isinstance(data.get("ops"), dict) and "rows" in data["ops"]:
     tracker = config.load().get("tracker", {}) if config.config_path().exists() else {}
+    BOARD = [{"status": s["status"], "role": s["role"]} for s in tracker.get("sections", [])]
     data["ops"]["rows"] = brief_data.order_ops(data["ops"]["rows"], tracker.get("sections", []))
 
 brief = (here / "brief.html").read_text()
@@ -116,13 +118,14 @@ def static_html(d):
     if ops is not None:
         out.append(f"<h2>{e(titles.get('ops') or 'Tasks')}</h2>" + note("ops"))
         rows = ops.get("rows", [])
-        main = [r for r in rows if r.get("status") != "Backlog"]
+        backlog_names = {s["status"] for s in ops.get("sections", []) if s.get("role") == "backlog"} or {"Backlog"}
+        main = [r for r in rows if r.get("status") not in backlog_names]
         trs = "".join(f"<tr><td>{e(r.get('n'))}</td><td>{e(r.get('key') or '')}</td><td>{e(r.get('priority') or '—')}</td>"
                       f"<td>{a(r.get('name'), r.get('url'))}</td><td>{e(r.get('assignee') or '—')}</td>"
                       f"<td>{e(dur(r.get('total')))}</td><td>{e(r.get('status'))}</td></tr>" for r in main)
         out.append('<table style="border-collapse:collapse"><tr><th>#</th><th>Key</th><th>Pri</th><th>Task</th>'
                    f"<th>Owner</th><th>Total</th><th>Status</th></tr>{trs}</table>")
-        backlog = [r for r in rows if r.get("status") == "Backlog"]
+        backlog = [r for r in rows if r.get("status") in backlog_names]
         if backlog:
             mine = sum(1 for r in backlog if r.get("assignee") == ops.get("me"))
             out.append(f"<p>Backlog: {len(backlog)} open ({mine} yours)</p>")
@@ -138,6 +141,8 @@ def static_html(d):
 
 
 def build(d):
+    if isinstance(d.get("ops"), dict) and BOARD:
+        d["ops"]["sections"] = BOARD
     payload = json.dumps(d, ensure_ascii=False).replace("<", "\\u003c")
     page = brief.replace("/*DATA*/null", payload).replace("<!--STATIC-->", static_html(d), 1)
     return shell.replace("<!--BRIEF-->", page)

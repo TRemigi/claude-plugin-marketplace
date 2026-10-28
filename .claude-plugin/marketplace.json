@@ -1,0 +1,12 @@
+{
+  "name": "daily-brief-dev",
+  "owner": { "name": "Taylor Remigi" },
+  "metadata": { "description": "Local marketplace for the daily-brief plugin." },
+  "plugins": [
+    {
+      "name": "daily-brief",
+      "source": "./",
+      "description": "Daily brief: standup notes, calendar, tracker board and todos in one local page. Driven by one config file; read-only by default."
+    }
+  ]
+}

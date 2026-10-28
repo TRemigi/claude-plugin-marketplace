@@ -569,7 +569,7 @@ function focusSection(key) {
   const warn = $('span', 'warn-ic'); warn.appendChild(ic('ti-alert-triangle')); warn.setAttribute('role', 'img');
   h.insertBefore(warn, h.querySelector('h2').nextSibling);
   const UC = 6;
-  const box = $('div', 'box'); const [t, tb] = table([108, null, 190, 96, 126, 56], [{ t: 'Key', title: 'ENGI key · copy the Asana link' }, { t: 'Task' }, { t: 'Activity' }, { t: 'Status' }, { t: 'Track', title: 'Track time on any date' }, { t: '', title: 'Dismiss' }]);
+  const box = $('div', 'box'); const [t, tb] = table([108, null, 190, 96, 126, 56], [{ t: 'Key', title: 'Card key · copy the Asana link' }, { t: 'Task' }, { t: 'Activity' }, { t: 'Status' }, { t: 'Track', title: 'Track time on any date' }, { t: '', title: 'Dismiss' }]);
   box.appendChild(t);
   const ft = $('div', 'ft'); const hint = $('span', 'hint', 'Cards with activity yesterday but no time logged. Track or dismiss each.' + (D.untrackedBasis ? ' ' + D.untrackedBasis : '')); hint.appendChild(pasteNote());
   const err = $('span', 'err'); const apply = $('button'); ft.appendChild(hint); ft.appendChild(err);
@@ -632,19 +632,26 @@ function focusSection(key) {
 (function () {
   const O = D.ops;
   if (!O) return;
-  const ST = ['Backlog', 'To do', 'In progress', 'Review', 'Ready to Deploy', 'Monitoring', 'Done'];
-  const ORDER = ['To do', 'In progress', 'Review', 'Ready to Deploy', 'Monitoring', 'Backlog'];
-  const TONE = { 'To do': null, 'In progress': 'blue', 'Review': 'purple', 'Ready to Deploy': 'green', 'Monitoring': 'amber', 'Backlog': null };
+  // The board's columns come from the config (render-panel.py puts them in ops.sections). Without them
+  // (a page saved before that existed), fall back to the statuses the rows use.
+  const SEC = O.sections || [...new Set(O.rows.map((r) => r.status))].map((status) => ({ status, role: status === 'Backlog' ? 'backlog' : 'active' }));
+  const withRole = (role) => SEC.filter((s) => s.role === role).map((s) => s.status);
+  const ST = SEC.map((s) => s.status);
+  const BACKLOG = withRole('backlog');
+  const ORDER = withRole('active').concat(BACKLOG);
+  const DONE = withRole('done')[0] || 'Done';
+  const TONES = [null, 'blue', 'purple', 'green', 'amber'];
+  const TONE = {}; ORDER.forEach((st, i) => { TONE[st] = BACKLOG.includes(st) ? null : TONES[i % TONES.length]; });
   const PR = ['P1', 'P2', 'P3'];
   const prank = (p) => { const i = PR.indexOf(p); return i < 0 ? 3 : i; };
   const rows = O.rows.map((r, i) => ({ ...r, priority: PR.includes(r.priority) ? r.priority : null, newPriority: PR.includes(r.priority) ? r.priority : null, _i: i, newStatus: r.status, entry: null, take: false, complete: false }))
     .sort((a, b) => prank(a.priority) - prank(b.priority) || String(a.created || '').localeCompare(String(b.created || '')) || a._i - b._i);
-  const active = rows.filter((r) => r.status !== 'Backlog').length;
+  const active = rows.filter((r) => !BACKLOG.includes(r.status)).length;
   const [s, h] = section('ti-layout-kanban', 'purple', TITLE.ops, active + ' active', 'ops');
   const mineL = $('label', 'ctl'); const mine = $('input'); mine.type = 'checkbox'; mineL.appendChild(mine); mineL.appendChild(document.createTextNode('Mine only')); h.insertBefore(mineL, h.querySelector('.sp'));
   const hasDue = rows.some((r) => r.due);
   const W = [44, 108, 70, null, 68].concat(hasDue ? [70] : [], [60, 56, 126, 118, 46]);
-  const H = [{ t: '#' }, { t: 'Key', title: 'ENGI key · copy the Asana link' }, { t: 'Priority', title: 'P1 highest · — not prioritized' }, { t: 'Task' }, { t: 'Owner' }].concat(hasDue ? [{ t: 'Due' }] : [], [
+  const H = [{ t: '#' }, { t: 'Key', title: 'Card key · copy the Asana link' }, { t: 'Priority', title: 'P1 highest · — not prioritized' }, { t: 'Task' }, { t: 'Owner' }].concat(hasDue ? [{ t: 'Due' }] : [], [
     { t: 'Total', num: 1, title: 'Total time tracked' },
     { t: 'Yday', num: 1, title: O.ydayTitle || 'Tracked yesterday' },
     { t: 'Track', title: 'Track time on any date' }, { t: 'Status' }, { t: '✓', title: 'Mark complete', center: 1 }]);
@@ -664,7 +671,7 @@ function focusSection(key) {
   const LANDED = {
     status: (r) => { r.status = r.newStatus; }, priority: (r) => { r.priority = r.newPriority; },
     take: (r) => { r.take = false; r.assignee = O.me; }, log: (r) => { r.entry = null; },
-    complete: (r) => { r.complete = false; r.status = r.newStatus = 'Done'; },
+    complete: (r) => { r.complete = false; r.status = r.newStatus = DONE; },
   };
   function label() { applyLabel(apply, pendCount(), 'asana'); }
   ADAPTER.onChange.push(label);

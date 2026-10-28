@@ -80,10 +80,8 @@ project's name), the sections and the custom fields.
 
 - Sections: show them in board order and ask each one's role: `backlog`, `active` or `done` (the user
   may leave a section out; it is then not tracked). `status` is the section's name. The board on the
-  brief page groups only active sections named To do, In progress, Review, Ready to Deploy or
-  Monitoring (and Backlog): tasks in an active section with any other name show in the terminal table
-  but not on the page. When the user marks such a section active, say so and offer to rename it in
-  Asana, leave it out, or keep it as it is.
+  brief page shows one group per `active` section, in board order, then the `backlog` sections, using
+  the section names as they are; nothing needs renaming in Asana.
 - Fields, each optional: `key` (a text field holding the card key, for example the ticket number),
   `priority` (an enum field: show its options and ask which three are P1, P2 and P3; all three are
   required), `estimate` (a number field, in minutes).
