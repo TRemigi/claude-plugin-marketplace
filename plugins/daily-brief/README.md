@@ -2,6 +2,12 @@
 
 A daily personal-assistant brief that renders as one local page: a standup-ready summary of what you did yesterday (tracker and Slack), today's calendar grouped by Google calendar, your tracker board as a status table, and your open todos from a Slack List. Scheduled runs are read-only; status changes, assign-to-me, completing, time logging and todo edits happen only when you click Apply on the page or ask in chat.
 
+## Install
+
+```
+/plugin install daily-brief --marketplace TRemigi/claude-plugin-marketplace
+```
+
 ## Skills
 
 - **daily-brief** (`/daily-brief:daily-brief`) — builds the brief, opens it in the Claude app's browser pane, and handles follow-ups: `3 → Review`, `5 take`, `3 +45m`, adding and completing todos, reopening a past day. Sections for sources that are not configured are left out. See `skills/daily-brief/SKILL.md`.

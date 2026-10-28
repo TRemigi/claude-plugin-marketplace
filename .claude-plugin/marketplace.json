@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "daily-brief",
-      "source": "./",
+      "source": "./plugins/daily-brief",
       "description": "Daily brief: standup notes, calendar, tracker board and todos in one local page. Driven by one config file; read-only by default."
     }
   ]
