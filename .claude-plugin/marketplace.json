@@ -1,12 +1,36 @@
 {
   "name": "trex-local-marketplace",
-  "owner": { "name": "trex" },
-  "metadata": { "description": "Local marketplace." },
+  "owner": {
+    "name": "trex"
+  },
+  "metadata": {
+    "description": "Local marketplace."
+  },
   "plugins": [
     {
       "name": "daily-brief",
       "source": "./plugins/daily-brief",
       "description": "Daily brief: standup notes, calendar, tracker board and todos in one local page. Driven by one config file; read-only by default."
+    },
+    {
+      "name": "functional-style",
+      "source": "./plugins/functional-style",
+      "description": "Functional programming style: immutability, pure functions and declarative transforms."
+    },
+    {
+      "name": "stratified-design",
+      "source": "./plugins/stratified-design",
+      "description": "Stratified design and the Single Level of Abstraction Principle (SLAP) for structuring functions and modules."
+    },
+    {
+      "name": "herdr",
+      "source": "./plugins/herdr",
+      "description": "Control Herdr, a terminal multiplexer for coding agents, through its CLI."
+    },
+    {
+      "name": "literal-explanations",
+      "source": "./plugins/literal-explanations",
+      "description": "Word explanations, summaries and reviews so they can be understood without prior knowledge of the codebase or domain."
     }
   ]
 }

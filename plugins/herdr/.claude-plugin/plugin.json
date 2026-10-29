@@ -1,0 +1,8 @@
+{
+  "name": "herdr",
+  "version": "1.0.0",
+  "description": "Control Herdr, a terminal multiplexer for coding agents, through its CLI.",
+  "author": {
+    "name": "trex"
+  }
+}

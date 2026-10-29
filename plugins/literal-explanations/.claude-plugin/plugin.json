@@ -1,0 +1,8 @@
+{
+  "name": "literal-explanations",
+  "version": "1.0.0",
+  "description": "Word explanations, summaries and reviews so they can be understood without prior knowledge of the codebase or domain.",
+  "author": {
+    "name": "trex"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "functional-style",
+  "version": "1.0.0",
+  "description": "Functional programming style: immutability, pure functions and declarative transforms.",
+  "author": {
+    "name": "trex"
+  }
+}
