@@ -533,6 +533,20 @@ function focusSection(key) {
   const box = $('div', 'box'); const [t, tb] = table([null]); box.appendChild(t); s.appendChild(box);
   const groups = S.groups.map((g) => ({ ...g, open: false }));
   const sync = expander(h, groups, render);
+  if (n) {
+    const cb = $('button', 'ctl'); cb.type = 'button'; cb.title = 'Copy yesterday as a bulleted list for a Slack standup';
+    const cbLabel = (txt, icon) => { cb.textContent = ''; cb.appendChild(ic(icon)); cb.appendChild(document.createTextNode(txt)); };
+    cbLabel('Copy to standup', 'ti-copy');
+    cb.onclick = () => {
+      const text = S.groups.filter((g) => g.items.length)
+        .map((g) => '*' + g.t + '*\n' + g.items.map((parts) => '• ' + parts.map((p) => p[0]).join('')).join('\n')).join('\n\n');
+      copyText(text).then((ok) => {
+        if (!ok) { window.prompt('Copy the standup list:', text); return; }
+        cbLabel('Copied', 'ti-check'); setTimeout(() => cbLabel('Copy to standup', 'ti-copy'), 1500);
+      });
+    };
+    h.appendChild(cb);
+  }
   function render() {
     tb.textContent = '';
     if (!n) tb.appendChild(emptyRow(1, 'No tracked activity yesterday'));
