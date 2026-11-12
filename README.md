@@ -9,6 +9,7 @@ A Claude Code plugin marketplace. Each plugin lives in its own folder under `plu
 - [stratified-design](plugins/stratified-design/skills/stratified-design/SKILL.md): stratified design and the Single Level of Abstraction Principle.
 - [herdr](plugins/herdr/skills/herdr/SKILL.md): control the Herdr terminal multiplexer for coding agents.
 - [literal-explanations](plugins/literal-explanations/skills/literal-explanations/SKILL.md): explanations that need no prior codebase or domain knowledge.
+- [ddd](plugins/ddd/README.md): Domain-Driven Design skills for strategic design, tactical design and architecture.
 
 ## Adding a plugin
 

@@ -1,0 +1,8 @@
+{
+  "name": "ddd",
+  "version": "1.0.0",
+  "description": "Domain-Driven Design: strategic design (subdomains, bounded contexts, ubiquitous language), tactical design (aggregates, entities, value objects, domain events) and architecture.",
+  "author": {
+    "name": "trex"
+  }
+}

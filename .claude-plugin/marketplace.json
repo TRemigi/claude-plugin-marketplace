@@ -31,6 +31,11 @@
       "name": "literal-explanations",
       "source": "./plugins/literal-explanations",
       "description": "Word explanations, summaries and reviews so they can be understood without prior knowledge of the codebase or domain."
+    },
+    {
+      "name": "ddd",
+      "source": "./plugins/ddd",
+      "description": "Domain-Driven Design: subdomains, bounded contexts, ubiquitous language, aggregates, entities, value objects, domain events and architecture."
     }
   ]
 }
